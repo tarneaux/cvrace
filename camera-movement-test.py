@@ -9,7 +9,7 @@ CAMERA_ID = 0
 # Threshold for the difference between two consecutive values of a pixel to be considered a change
 THRESHOLD = 50
 # Minimum time between two consecutive pictures. Will be longer if processing takes longer
-INTERVAL = 50
+INTERVAL = 100
 
 # END OF GLOBAL OPTIONS
 
@@ -19,7 +19,7 @@ import numpy as n
 import time
 
 
-# Here goes all that can change between the two camera libraries
+# Here goes all that can change between the two camera librarier
 if PICAMERA:
     from picamera2 import Picamera2
 
@@ -45,8 +45,6 @@ def main():
             continue
 
         img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-
-        # imgGray = cv.resize(imgGray, (507, 380))
 
         if img_previous is not None:
             img_diff = process_image(img_gray, img_previous)
@@ -80,60 +78,110 @@ def process_image(img_gray, previous_image):
     return img_diff
 
 def get_object_positions(img_diff) -> List[tuple[float, float]]:
-    ret, grayplus = cv.threshold(img_diff, 127+THRESHOLD, 255, cv.THRESH_TOZERO)
+    ret, grayplus = cv.threshold(img_diff, 127+THRESHOLD, 255, cv.THRESH_BINARY)
 
     if not ret:
-        print("Threshold failed")
         raise RuntimeError("Threshold failed")
 
-    ret, grayminus = cv.threshold(img_diff, 127-THRESHOLD, 255, cv.THRESH_TOZERO_INV)
+    ret, grayminus = cv.threshold(img_diff, 127-THRESHOLD, 255, cv.THRESH_BINARY_INV)
 
     if not ret:
-        print("Threshold failed")
         raise RuntimeError("Threshold failed")
 
     gray = grayplus + grayminus
 
+    # All points that are on
+    points = n.argwhere(gray > 0)
+    contour_centers = [(int(x), int(y)) for y, x in points]
+
+    # Create an empty Delaunay triangulation
+    delaunay = cv.Subdiv2D()
+
+    delaunay.initDelaunay((0, 0, img_diff.shape[1], img_diff.shape[0]))
+
+    # Insert the points into the triangulation
+    delaunay.insert(contour_centers)
+
+    # Get the triangles
+    triangles = delaunay.getTriangleList()
+
+    # Filter out the triangles that are too long
+    triangles = [triangle for triangle in triangles if get_triangle_length(triangle) < 35]
+    if len(triangles) == 0:
+        return []
+
+    # Draw the triangles on a black image
+    img_triangles = cv.cvtColor(n.zeros_like(img_diff), cv.COLOR_GRAY2BGR)
+    for triangle in triangles:
+        cv.fillConvexPoly(img_triangles, n.array(triangle, dtype=n.int32).reshape(-1, 2), (255, 255, 255))
+    
+    cv.imshow("triangles", img_triangles)
+
+    # We now want to find the center of each group of triangles
+    # We do this by finding the contours of the triangles
+
+    # Convert to grayscale
+    img_triangles_gray = cv.cvtColor(img_triangles, cv.COLOR_BGR2GRAY)
+
+    # Threshold
+    ret, img_triangles_thresh = cv.threshold(img_triangles_gray, 127, 255, cv.THRESH_BINARY)
+
     # Find contours
-    contours, hierarchy = cv.findContours(gray, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv.findContours(img_triangles_thresh, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE)
 
-    # Get the center of each contour
-    contour_centers = []
+    # Draw the contours
+    img_contours = cv.cvtColor(n.zeros_like(img_diff), cv.COLOR_GRAY2BGR)
+    cv.drawContours(img_contours, contours, -1, (255, 255, 255), 2)
+    cv.imshow("contours", img_contours)
+
+    # Get the centers of the contours
+    centers = []
     for contour in contours:
-        M = cv.moments(contour)
-        if M["m00"] != 0:
-            x = M["m10"] / M["m00"]
-            y = M["m01"] / M["m00"]
-            contour_centers.append((x, y))
+        # Get the moments
+        moments = cv.moments(contour)
 
-    lines = []
-    for x, y in contour_centers:
-        closest = get_closest(contour_centers, x, y, 4)
-        for x2, y2 in closest[1:]: # Skip the first one, which is the same as the current one
-            lines.append((x, y, x2, y2))
+        # Get the center
+        center = (moments["m10"] / moments["m00"], moments["m01"] / moments["m00"])
 
-    # Remove duplicates
-    lines = list(set(lines))
+        # Append to the list
+        centers.append(center)
 
-    # Create a black image
-    line_img = cv.cvtColor(n.zeros_like(img_diff), cv.COLOR_GRAY2BGR)
+    # Combine centers that are close together
+    for i in range(len(centers)):
+        for j in range(i + 1, len(centers)):
+            if n.sqrt((centers[i][0] - centers[j][0])**2 + (centers[i][1] - centers[j][1])**2) < 20:
+                if centers[i] is None or centers[j] is None:
+                    continue
+                centers[i] = ((centers[i][0] + centers[j][0]) / 2, (centers[i][1] + centers[j][1]) / 2)
+                centers[j] = None
 
-    for x1, y1, x2, y2 in lines:
-        cv.line(line_img, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), 2)
+    return [center for center in centers if center is not None]
 
-    cv.imshow("lines", line_img)
+def rect_contains(rect, point):
+    if point[0] < rect[0]:
+        return False
+    elif point[1] < rect[1]:
+        return False
+    elif point[0] > rect[2]:
+        return False
+    elif point[1] > rect[3]:
+        return False
+    return True
 
-    return []
+def get_triangle_length(triangle):
+    pt1 = (triangle[0], triangle[1])
+    pt2 = (triangle[2], triangle[3])
+    pt3 = (triangle[4], triangle[5])
 
-def get_closest(coords_list, x, y, count):
-    distances = [
-        (i, n.linalg.norm(n.array((x, y)) - n.array((x2, y2))))
-        for i, (x2, y2) in enumerate(coords_list)
-    ]
+    pt1 = (int(pt1[0]), int(pt1[1]))
+    pt2 = (int(pt2[0]), int(pt2[1]))
+    pt3 = (int(pt3[0]), int(pt3[1]))
 
-    distances.sort(key=lambda x: x[1])
-
-    return [coords_list[i] for i, _ in distances[:count]]
+    return max(
+        n.sqrt((pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2),
+        n.sqrt((pt2[0] - pt3[0])**2 + (pt2[1] - pt3[1])**2),
+        n.sqrt((pt3[0] - pt1[0])**2 + (pt3[1] - pt1[1])**2)
+    )
 
 if __name__ == "__main__":
     main()
