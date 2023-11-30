@@ -4,10 +4,10 @@
 
 # Use picamera2 instead of opencv for taking pictures
 PICAMERA = False
-# Camera device ID, list with ls /dev/video* to find the correct one
-CAMERA_ID = 0
+# Camera device ID, list with `ls /dev/video*` to find the correct one
+CAMERA_ID = 2
 # Threshold for the difference between two consecutive values of a pixel to be considered a change
-THRESHOLD = 50
+THRESHOLD = 30
 # Minimum time between two consecutive pictures. Will be longer if processing takes longer
 INTERVAL = 100
 
@@ -40,6 +40,11 @@ def main():
         # Take a picture
         ret, img = getImg()
 
+        img_height, _, _ = img.shape
+
+        # Cut the top and bottom of the image
+        img = img[int(img_height / 3):int(img_height / 3 * 2), :]
+
         if not ret:
             print("Camera read failed")
             continue
@@ -67,13 +72,20 @@ def main():
 
 def process_image(img_gray, previous_image):
     img_diff = img_gray - previous_image + 127
+    csv = open("positions.csv", "a")
 
     # Get object positions
-    positions = get_object_positions(img_diff)
+    try:
+        positions = get_object_positions(img_diff)
+        ts = int(time.time() * 1000)
 
-    for x, y in positions:
-        # Draw a circle at the mean X and Y
-        cv.circle(img_diff, (int(x), int(y)), 10, (0, 0, 0), 2)
+        for x, y in positions:
+            # Draw a circle at the mean X and Y
+            cv.circle(img_diff, (int(x), int(y)), 10, (0, 0, 0), 2)
+            csv.write(f"{ts};{x};{y}\n")
+    except Exception as e:
+        print(e)
+        pass
 
     return img_diff
 
@@ -106,9 +118,26 @@ def get_object_positions(img_diff) -> List[tuple[float, float]]:
     triangles = delaunay.getTriangleList()
 
     # Filter out the triangles that are too long
-    triangles = [triangle for triangle in triangles if get_triangle_length(triangle) < 35]
+    triangles = [triangle for triangle in triangles if get_triangle_length(triangle) < 50]
     if len(triangles) == 0:
         return []
+
+    # Draw the lines on a black image
+    img_lines = cv.cvtColor(n.zeros_like(img_diff), cv.COLOR_GRAY2BGR)
+    for triangle in triangles:
+        pt1 = (triangle[0], triangle[1])
+        pt2 = (triangle[2], triangle[3])
+        pt3 = (triangle[4], triangle[5])
+
+        pt1 = (int(pt1[0]), int(pt1[1]))
+        pt2 = (int(pt2[0]), int(pt2[1]))
+        pt3 = (int(pt3[0]), int(pt3[1]))
+
+        cv.line(img_lines, pt1, pt2, (255, 255, 255), 2)
+        cv.line(img_lines, pt2, pt3, (255, 255, 255), 2)
+        cv.line(img_lines, pt3, pt1, (255, 255, 255), 2)
+
+    cv.imshow("lines", img_lines)
 
     # Draw the triangles on a black image
     img_triangles = cv.cvtColor(n.zeros_like(img_diff), cv.COLOR_GRAY2BGR)
@@ -156,17 +185,6 @@ def get_object_positions(img_diff) -> List[tuple[float, float]]:
                 centers[j] = None
 
     return [center for center in centers if center is not None]
-
-def rect_contains(rect, point):
-    if point[0] < rect[0]:
-        return False
-    elif point[1] < rect[1]:
-        return False
-    elif point[0] > rect[2]:
-        return False
-    elif point[1] > rect[3]:
-        return False
-    return True
 
 def get_triangle_length(triangle):
     pt1 = (triangle[0], triangle[1])
