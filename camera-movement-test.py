@@ -117,6 +117,9 @@ def get_object_positions(img_diff) -> List[tuple[float, float]]:
     # Get the triangles
     triangles = delaunay.getTriangleList()
 
+    if len(triangles) > 10000:
+        return []
+
     # Filter out the triangles that are too long
     triangles = [triangle for triangle in triangles if get_triangle_length(triangle) < 50]
     if len(triangles) == 0:
