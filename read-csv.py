@@ -16,7 +16,7 @@ data[:, 0] -= data[0, 0]
 data[:, 0] /= 1000
 
 # Triggers every 5 meters
-triggers = [i for i in range(500, 50, -50)]
+triggers = [i for i in range(500, 0, -25)]
 
 passes = []
 
@@ -26,7 +26,7 @@ def pos_to_trigger(pos):
             return i
     return -1
 
-prev_trigger = pos_to_trigger(data[0, 1])
+prev_trigger = -1
 
 for data_point in data[1:]:
     trigger = pos_to_trigger(data_point[1])
@@ -39,21 +39,40 @@ passes = np.array(passes)
 # Make the trigger be in meters
 passes[:, 1] = passes[:, 1] * 5
 
-# Make two plots for x and y
-plt.plot(passes[:, 0], passes[:, 1], label='pos', marker='.', linestyle='-')
-
 speeds = [
-    5 / (passes[i+1, 0] - passes[i, 0])
+    (passes[i+1, 1] - passes[i, 0]) / (passes[i+1, 0] - passes[i, 0])
     for i in range(len(passes) - 1)
 ]
 
-speed_times = passes[1:, 0] - (passes[1:, 0] - passes[:-1, 0]) / 2
-
 print(passes, speeds)
 
-plt.plot(speed_times, speeds, label='speed', marker='.', linestyle='-')
+# Since we know that the trigger positions are continuous (without going back), we can use that position in the X axis
+
+# Plot the data
+fig = plt.figure()
+ax = fig.add_subplot(111)
+
+ax.plot(passes[:, 1], passes[:, 0], label='time to arrive', marker='.', linestyle='-', color='blue')
+
+# Use the same x axis for both plots
+ax2 = ax.twinx()
+
+speed_x = passes[:-1, 1] + (passes[1:, 1] - passes[:-1, 1]) / 2
+
+ax2.plot(speed_x, speeds, label='speed', marker='.', linestyle='-', color='red')
 
 # Add legend
-plt.legend(loc='upper left')
+ax.legend(loc='upper left')
+ax2.legend(loc='upper right')
+
+# Add labels on the axes
+ax.set_xlabel('Position (m)')
+ax.set_ylabel('Time (s)')
+ax2.set_ylabel('Speed (m/s)')
+
+# Make all axes start at 0
+ax.set_xlim(0, None)
+ax.set_ylim(0, None)
+ax2.set_ylim(0, None)
 
 plt.show()
