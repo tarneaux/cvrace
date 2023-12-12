@@ -5,9 +5,9 @@
 # Use picamera2 instead of opencv for taking pictures
 PICAMERA = False
 # Camera device ID, list with `ls /dev/video*` to find the correct one
-CAMERA_ID = 2
+CAMERA_ID = 0
 # Threshold for the difference between two consecutive values of a pixel to be considered a change
-THRESHOLD = 30
+THRESHOLD = 50
 # Minimum time between two consecutive pictures. Will be longer if processing takes longer
 INTERVAL = 100
 
