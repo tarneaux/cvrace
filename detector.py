@@ -71,6 +71,9 @@ class MovementDetector:
         ret, frame = self.cap.read()
         if not ret:
             raise Exception('Could not read frame from camera')
+        # Crop a third of the image from the top and bottom
+        height, width, _ = frame.shape
+        frame = frame[height // 3:height // 3 * 2, :]
         if self.prev_frame is not None:
             diff = cv2.absdiff(frame, self.prev_frame[0])
             object_positions = get_movement_spots(diff, self.settings)
