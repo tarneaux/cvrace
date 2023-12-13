@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple
 from scipy.signal import savgol_filter
 
 @dataclass
@@ -55,13 +55,13 @@ def map_points_to_real_position(
     :param point_filter: A function that takes an x value (pixels) and returns a new x value (meters).
     :return: The mapped data points.
     """
-    if point_filter is not None:
-        data_points = [
-            (time, point_filter(x))
-            for time, x in data_points
-        ]
+    data_points = [
+        (time, point_filter(x))
+        for time, x in data_points
+    ]
     return data_points
 
+# TEMP
 def point_filter(x: float) -> float:
     """
     Filter a single x value.
@@ -131,6 +131,7 @@ if __name__ == '__main__':
     data_points = read_data('positions.csv')
     data_points = filter_points(data_points)
     data_points = map_points_to_real_position(data_points, point_filter)
-    data_points_filtered = list(savgol_filter(data_points, 51, 3, axis=0))
-    speeds = get_speeds(data_points_filtered)
-    plot_data(data_points_filtered, speeds, data_points)
+    data_points_smoothed = list(savgol_filter(data_points, 51, 3, axis=0))
+    speeds = get_speeds(data_points_smoothed)
+    # smoothed_speeds = list(savgol_filter(speeds, 51, 3, axis=0))
+    plot_data(data_points_smoothed, speeds, data_points)
