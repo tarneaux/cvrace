@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
 from matplotlib import pyplot as plt
 import numpy as np
 from dataclasses import dataclass
 from typing import Tuple
 from scipy.signal import savgol_filter
+
+KM_H = True
 
 @dataclass
 class DataPoint:
@@ -90,7 +93,10 @@ def get_speeds(
         time2, x2 = data_points[i + 1]
         speed = (x2 - x1) / (time2 - time1)
         mean_time = (time1 + time2) / 2
-        speeds.append((mean_time, abs(speed)))
+        if KM_H:
+            speeds.append((mean_time, abs(speed) * 3.6))
+        else:
+            speeds.append((mean_time, abs(speed)))
     return speeds
 
 def plot_data(
@@ -108,20 +114,23 @@ def plot_data(
     ax = plt.axes()
 
     # Plot the data points.
-    plt.plot(*zip(*data_points), label='Data points')
+    plt.plot(*zip(*data_points), label='Data points', color='green')
 
     # Plot the raw data points.
-    plt.plot(*zip(*raw_data_points), label='Raw data points')
+    plt.plot(*zip(*raw_data_points), label='Raw data points', color='blue')
 
     twin = ax.twinx()
 
     # Plot the speeds.
-    twin.plot(*zip(*speeds), label='Speed')
+    twin.plot(*zip(*speeds), label='Speed', color='red')
 
     # Add labels.
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Position from left side (m)')
-    twin.set_ylabel('Speed (m/s)')
+    if KM_H:
+        twin.set_ylabel('Speed (km/h)')
+    else:
+        twin.set_ylabel('Speed (m/s)')
     twin.set_ylim(0, None)
 
     # Add a legend.
@@ -134,7 +143,7 @@ if __name__ == '__main__':
     data_points = read_data('positions.csv')
     data_points = filter_points(data_points)
     data_points = map_points_to_real_position(data_points, point_filter)
-    data_points_smoothed = list(savgol_filter(data_points, 51, 3, axis=0))
+    data_points_smoothed = list(savgol_filter(data_points, min(51, len(data_points)), 3, axis=0))
     speeds = get_speeds(data_points_smoothed)
     # smoothed_speeds = list(savgol_filter(speeds, 51, 3, axis=0))
     plot_data(data_points_smoothed, speeds, data_points)
