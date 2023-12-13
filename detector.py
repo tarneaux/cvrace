@@ -100,7 +100,7 @@ class MovementDetector:
         cv2.imshow('preview', preview)
 
 def main():
-    detector = MovementDetector(Settings(7, 25, 15))
+    detector = MovementDetector(Settings(15, 20, 15))
     while True:
         try:
             t = time.time()
