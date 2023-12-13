@@ -15,8 +15,14 @@ data[:, 0] -= data[0, 0]
 # Make the time be in seconds
 data[:, 0] /= 1000
 
-# Triggers every 5 meters
+# Triggers over the whole length of the track
 triggers = [i for i in range(500, 0, -25)]
+
+# The conversion between the trigger index and the real world position in meters.
+# We know that the total length is 40 meters, so we can use that to calculate the position of each trigger
+trigger_map = [i * 40 / len(triggers) for i in range(len(triggers))]
+
+print(trigger_map, triggers)
 
 passes = []
 
@@ -36,17 +42,17 @@ for data_point in data[1:]:
 
 passes = np.array(passes)
 
-# Make the trigger be in meters
-passes[:, 1] = passes[:, 1] * 5
+print(passes)
+
+# Map the passes to the real world position
+passes[:, 1] = [trigger_map[int(i)] for i in passes[:, 1]]
+
 
 speeds = [
     (passes[i+1, 1] - passes[i, 0]) / (passes[i+1, 0] - passes[i, 0])
     for i in range(len(passes) - 1)
 ]
 
-print(passes, speeds)
-
-# Since we know that the trigger positions are continuous (without going back), we can use that position in the X axis
 
 # Plot the data
 fig = plt.figure()
@@ -71,7 +77,7 @@ ax.set_ylabel('Time (s)')
 ax2.set_ylabel('Speed (m/s)')
 
 # Make all axes start at 0
-ax.set_xlim(0, None)
+ax.set_xlim(0, 40)
 ax.set_ylim(0, None)
 ax2.set_ylim(0, None)
 
