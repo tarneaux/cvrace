@@ -1,7 +1,5 @@
 import cv2
-import numpy as np
 import time
-import multiprocessing as mp
 import csv
 from dataclasses import dataclass
 
