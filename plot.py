@@ -52,7 +52,8 @@ def map_points_to_real_position(
     Map the data points to real-world positions in meters.
 
     :param data_points: The data points to map.
-    :param point_filter: A function that takes an x value (pixels) and returns a new x value (meters).
+    :param point_filter: A function that takes an x value (pixels) and returns
+    a new x value (meters).
     :return: The mapped data points.
     """
     data_points = [
@@ -69,7 +70,8 @@ def point_filter(x: float) -> float:
     :param x: The x value to filter.
     :return: The filtered x value.
     """
-    # The runway is 20 meters long and covers the entire width of the image, which is 1280 pixels.
+    # The runway is 20 meters long and covers the entire width of the image,
+    # which is 1280 pixels.
     return x * (20 / 1280)
 
 def get_speeds(
@@ -78,7 +80,7 @@ def get_speeds(
     """
     Calculate the speed of the runner between each data point.
 
-    :param data_points: The real world data points (from map_points_to_real_position).
+    :param data_points: The real world data points (which are in meters).
     :return: The speeds.
     """
     speeds = []

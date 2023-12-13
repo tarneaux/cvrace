@@ -14,8 +14,8 @@ class Settings:
 def get_movement_spots(diff, settings: Settings) -> list:
     """
     Get the spots where movement is detected.
-    This function uses a combination of image processing techniques to detect movement.
-    These include:
+    This function uses a combination of image processing techniques to detect
+    movement. These include:
     - Absolute difference between current and previous frame
     - Grayscale conversion
     - Gaussian blur
@@ -23,7 +23,8 @@ def get_movement_spots(diff, settings: Settings) -> list:
     - Dilation
     - Contour detection
     - Contour center calculation
-    :param diff: Difference between two consecutive frames. Can be obtained with cv2.absdiff() on two frames.
+    :param diff: Difference between two consecutive frames. 
+                 Can be obtained with cv2.absdiff() on two frames.
     :return: List of spots where movement is detected
     """
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
@@ -39,7 +40,10 @@ def get_movement_spots(diff, settings: Settings) -> list:
 def get_contour_centers(contours) -> list:
     contours = [cv2.moments(c) for c in contours]
     try:
-        return [(int(m['m10'] / m['m00']), int(m['m01'] / m['m00'])) for m in contours]
+        return [
+            (int(m['m10'] / m['m00']), int(m['m01'] / m['m00']))
+            for m in contours
+        ]
     except ZeroDivisionError:
         print('ZeroDivisionError')
         return []
