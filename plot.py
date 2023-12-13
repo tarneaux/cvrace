@@ -90,7 +90,7 @@ def get_speeds(
         time2, x2 = data_points[i + 1]
         speed = (x2 - x1) / (time2 - time1)
         mean_time = (time1 + time2) / 2
-        speeds.append((mean_time, speed))
+        speeds.append((mean_time, abs(speed)))
     return speeds
 
 def plot_data(
@@ -122,6 +122,7 @@ def plot_data(
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Position from left side (m)')
     twin.set_ylabel('Speed (m/s)')
+    twin.set_ylim(0, None)
 
     # Add a legend.
     plt.legend()
