@@ -22,21 +22,21 @@ class GUI:
         self.master.title("CVRace")
 
         # Detector
-        self.detector_frame = tk.LabelFrame(self.master, text="Detector")
+        self.detector_frame = tk.LabelFrame(self.master, text="Detecteur")
         self.detector_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.detector_frame.columnconfigure(0, weight=1)
         self.detector_frame.rowconfigure(0, weight=1)
 
-        self.detector_button = tk.Button(self.detector_frame, text="Run Detector", command=self.run_detector)
+        self.detector_button = tk.Button(self.detector_frame, text="Lancer le détecteur", command=self.run_detector)
         self.detector_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Plotter
-        self.plotter_frame = tk.LabelFrame(self.master, text="Plotter")
+        self.plotter_frame = tk.LabelFrame(self.master, text="Graphique")
         self.plotter_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
         self.plotter_frame.columnconfigure(0, weight=1)
         self.plotter_frame.rowconfigure(0, weight=1)
 
-        self.plotter_button = tk.Button(self.plotter_frame, text="Run Plotter", command=self.run_plotter)
+        self.plotter_button = tk.Button(self.plotter_frame, text="Tracer le graphique", command=self.run_plotter)
         self.plotter_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
     def run_detector(self):
@@ -67,7 +67,7 @@ class GUI:
         # Ask for the file name
         self.file_name = filedialog.askopenfilename(initialdir="output", title="Select file", filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
         if not self.file_name:
-            messagebox.showerror("Error", "No file selected.")
+            messagebox.showerror("Erreur", "Pas de fichier sélectionné.")
             return
         # Run the script
         shutil.copy(self.file_name, "positions.csv")

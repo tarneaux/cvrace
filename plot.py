@@ -114,27 +114,28 @@ def plot_data(
     ax = plt.axes()
 
     # Plot the data points.
-    plt.plot(*zip(*data_points), label='Data points', color='green')
+    plt.plot(*zip(*data_points), color='green')
 
     # Plot the raw data points.
-    plt.plot(*zip(*raw_data_points), label='Raw data points', color='blue')
+    # plt.plot(*zip(*raw_data_points), label='Raw data points', color='blue')
 
     twin = ax.twinx()
 
     # Plot the speeds.
-    twin.plot(*zip(*speeds), label='Speed', color='red')
+    twin.plot(*zip(*speeds), label='Vitesse', color='blue')
 
     # Add labels.
     ax.set_xlabel('Time (s)')
-    ax.set_ylabel('Position from left side (m)')
+    ax.set_ylabel('Distance du côté gauche (m)')
     if KM_H:
-        twin.set_ylabel('Speed (km/h)')
+        twin.set_ylabel('Vitesse (km/h)')
     else:
-        twin.set_ylabel('Speed (m/s)')
+        twin.set_ylabel('Vitesse (m/s)')
     twin.set_ylim(0, None)
 
     # Add a legend.
     plt.legend()
+    twin.legend()
 
     # Show the plot.
     plt.show()
