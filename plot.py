@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 from matplotlib import pyplot as plt
 import numpy as np
-from dataclasses import dataclass
 from typing import Tuple
-from scipy.signal import savgol_filter
+from scipy.signal import filtfilt
+from sequence_filter import find_longest_monotonic_sequence
+from typing import Callable
 
 KM_H = True
 
-@dataclass
-class DataPoint:
-    time: float
-    xs: list[float]
-
-
-def read_data(filename) -> list[DataPoint]:
+def read_data(filename) -> list[Tuple[float, float]]:
     """
     Read data points from a CSV file.
     :param filename: The file to read from.
@@ -21,35 +16,14 @@ def read_data(filename) -> list[DataPoint]:
     """
     # First line: time;x;y
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
-    data_points = []
-    for timestamp, x, _ in data:
-        if len(data_points) > 0 and timestamp == data_points[-1].time:
-            data_points[-1].xs.append(x)
-        else:
-            data_points.append(DataPoint(timestamp, [x]))
-    return data_points
-
-# TEMP
-def filter_points(
-        data_points: list[DataPoint]
-    ) -> list[Tuple[float, float]]:
-    """
-    Filter the data points so that it makes a single continuous line.
-
-    :param data_points: The data points to filter.
-    :return: The filtered data points.
-    """
-    sorted_data_points = sorted(data_points, key=lambda x: x.time)
-    # Flatten the list of data points into a list of (time, x) tuples.
-    sorted_data_points = [
-        (data_point.time, data_point.xs[0])
-        for data_point in sorted_data_points
+    return [
+        (time, x)
+        for time, x, _ in data
     ]
-    return sorted_data_points
 
 def map_points_to_real_position(
     data_points: list[Tuple[float, float]],
-    point_filter: callable
+    point_filter: Callable[[float], float]
 ) -> list[Tuple[float, float]]:
     """
     Map the data points to real-world positions in meters.
@@ -74,7 +48,6 @@ def point_filter(x: float) -> float:
     :return: The filtered x value.
     """
     # The runway is 20 meters long and covers the entire width of the image,
-    # which is 1280 pixels.
     return x * (20 / 1280)
 
 def get_speeds(
@@ -117,7 +90,7 @@ def plot_data(
     plt.plot(*zip(*data_points), color='green')
 
     # Plot the raw data points.
-    # plt.plot(*zip(*raw_data_points), label='Raw data points', color='blue')
+    plt.plot(*zip(*raw_data_points), label='Raw data points', color='blue', marker='.', linestyle=' ')
 
     twin = ax.twinx()
 
@@ -142,9 +115,11 @@ def plot_data(
 
 if __name__ == '__main__':
     data_points = read_data('positions.csv')
-    data_points = filter_points(data_points)
+    data_points = find_longest_monotonic_sequence(data_points)
     data_points = map_points_to_real_position(data_points, point_filter)
-    data_points_smoothed = list(savgol_filter(data_points, min(51, len(data_points)), 3, axis=0))
+    # data_points_smoothed = list(savgol_filter(data_points, min(51, len(data_points)//3), 6, axis=0))
+    # data_points_smoothed = list(wiener(data_points, 51, axis=0))
+    data_points_smoothed = list(filtfilt([1/3, 1/3, 1/3], [1], data_points, axis=0))
     speeds = get_speeds(data_points_smoothed)
     # smoothed_speeds = list(savgol_filter(speeds, 51, 3, axis=0))
     plot_data(data_points_smoothed, speeds, data_points)

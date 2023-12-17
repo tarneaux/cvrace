@@ -4,7 +4,7 @@ import time
 import csv
 from dataclasses import dataclass
 
-CAMERA_ID = 2
+CAMERA_ID = 0
 
 @dataclass
 class Settings:
