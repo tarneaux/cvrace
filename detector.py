@@ -4,6 +4,7 @@ import time
 import csv
 from dataclasses import dataclass
 from typing import List, Tuple
+import numpy as np
 
 CAMERA_ID = 0
 FPS = 6
@@ -90,7 +91,10 @@ class MovementDetector:
         """
         capture_time = time.time()
         frame = self.__get_image()
-        diff = cv2.absdiff(frame, self.__prev_frame[0])
+        diff = cv2.subtract(frame, self.__prev_frame[0])
+        # Only keep the positive differences
+        diff = np.clip(diff, 0, 255)
+        cv2.imshow("diff", diff)
         object_positions = get_movement_spots(diff, self.__settings)
         mean_time = (capture_time + self.__prev_frame[1]) / 2
         self.__prev_frame = (frame, capture_time)
