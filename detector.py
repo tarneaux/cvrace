@@ -3,11 +3,10 @@ import cv2
 import time
 import csv
 from dataclasses import dataclass
-import numpy as np
 from typing import List, Tuple
 
 CAMERA_ID = 0
-
+FPS = 6
 
 @dataclass
 class Settings:
@@ -111,10 +110,11 @@ class MovementDetector:
         ret, frame = self.__cap.read()
         if not ret:
             raise Exception("Could not read frame from camera")
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # Crop a third of the image from the top and bottom
-        height, _, _ = frame.shape
-        frame = frame[height // 3 : height // 3 * 2, :]
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        height, _ = frame.shape
+        frame = frame[int(height / 3) : int((height * 2) / 3), :]
+        return frame
 
 
 def main():
@@ -130,14 +130,13 @@ def main():
             # Limit to 4 FPS
             time_taken = time.time() - t
 
-            to_sleep = max(0, 0.2 - time_taken)
+            to_sleep = (1/FPS) - time_taken
 
-            print(f"Time taken: {time_taken}")
-
-            time.sleep(max(0, to_sleep))
-
-            if to_sleep == 0:
-                print(f"Lagging behind!")
+            if to_sleep <= 0:
+                print(f"Lagging behind by {-to_sleep}!")
+                print(f"Time taken: {time_taken}")
+            else:
+                time.sleep(to_sleep)
 
             if key == ord("q"):
                 break
