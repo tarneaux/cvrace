@@ -15,8 +15,8 @@ class Settings:
 def get_movement_spots(diff, settings: Settings) -> List[Tuple[int, int]]:
     """
     Get the spots where movement is detected.
-    This function uses a combination of image processing techniques to detect
-    movement. These include:
+
+    The following steps are performed:
     - Absolute difference between current and previous frame
     - Grayscale conversion
     - Gaussian blur
@@ -24,8 +24,15 @@ def get_movement_spots(diff, settings: Settings) -> List[Tuple[int, int]]:
     - Dilation
     - Contour detection
     - Contour center calculation
+
     :param diff: Difference between two consecutive frames.
-                 Can be obtained with cv2.absdiff() on two frames.
+                 Can be obtained with the following code
+                 (frame and prev_frame are grayscale images):
+
+                    diff = cv2.subtract(frame, prev_frame)
+                    # Only keep the positive differences
+                    diff = np.clip(diff, 0, 255)
+
     :return: List of spots where movement is detected
     """
     blur = cv2.GaussianBlur(diff, (settings.blur_strength, settings.blur_strength), 0)
