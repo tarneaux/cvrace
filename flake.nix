@@ -27,7 +27,7 @@
               in
                 pkgs.python3.override {inherit packageOverrides; self = python;};
             in
-              python.withPackages (ps: with ps; [ numpy opencv4 ]))
+              python.withPackages (ps: with ps; [ numpy opencv4 matplotlib scipy networkx ]))
           gtk2-x11
           pkg-config
         ];
