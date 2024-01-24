@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import cv2
+import cv2 as cv
 import time
 import csv
 from movement_detector import MovementDetector, Settings
@@ -16,8 +16,8 @@ def show_preview(frame, object_positions: list):
     """
     preview = frame.copy()
     for center in object_positions:
-        cv2.circle(preview, center, 10, (0, 255, 0), -1)
-    cv2.imshow("preview", preview)
+        cv.circle(preview, center, 10, (0, 255, 0), -1)
+    cv.imshow("preview", preview)
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
             capture_time, object_positions = detector.detect_movement()
             position_history.append((capture_time, object_positions))
             show_preview(detector.get_previous_frame(), object_positions)
-            key = cv2.waitKey(1)
+            key = cv.waitKey(1)
 
             time_taken = time.time() - t
 
@@ -55,7 +55,7 @@ def main():
             for x, y in positions:
                 writer.writerow([t, x, y])
 
-    cv2.destroyAllWindows()
+    cv.destroyAllWindows()
 
 
 if __name__ == "__main__":

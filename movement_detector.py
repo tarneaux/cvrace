@@ -1,4 +1,4 @@
-import cv2
+import cv2 as cv
 import time
 from dataclasses import dataclass
 from typing import List, Tuple
@@ -29,24 +29,24 @@ def get_movement_spots(diff, settings: Settings) -> List[Tuple[int, int]]:
                  Can be obtained with the following code
                  (frame and prev_frame are grayscale images):
 
-                    diff = cv2.subtract(frame, prev_frame)
+                    diff = cv.subtract(frame, prev_frame)
                     # Only keep the positive differences
                     diff = np.clip(diff, 0, 255)
 
     :return: List of spots where movement is detected
     """
-    blur = cv2.GaussianBlur(diff, (settings.blur_strength, settings.blur_strength), 0)
-    _, thresh = cv2.threshold(blur, settings.threshold, 255, cv2.THRESH_BINARY)
+    blur = cv.GaussianBlur(diff, (settings.blur_strength, settings.blur_strength), 0)
+    _, thresh = cv.threshold(blur, settings.threshold, 255, cv.THRESH_BINARY)
     # Dilation is used to fill in the gaps between contours
-    dilated = cv2.dilate(thresh, None, iterations=settings.dilation_iterations)
-    contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    dilated = cv.dilate(thresh, None, iterations=settings.dilation_iterations)
+    contours, _ = cv.findContours(dilated, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
     # Get the centers of the contours
     centers = get_contour_centers(contours)
     return centers
 
 
 def get_contour_centers(contours) -> List[Tuple[int, int]]:
-    contours = [cv2.moments(c) for c in contours]
+    contours = [cv.moments(c) for c in contours]
 
     def get_contour_center(m):
         try:
@@ -65,7 +65,7 @@ class MovementDetector:
         :param settings: Settings for the movement detector
         """
         self.__settings = settings
-        self.__cap = cv2.VideoCapture(camera_id)
+        self.__cap = cv.VideoCapture(camera_id)
         self.reset()
 
     def reset(self):
@@ -82,10 +82,10 @@ class MovementDetector:
         """
         capture_time = time.time()
         frame = self.__get_image()
-        diff = cv2.subtract(frame, self.__prev_frame[0])
+        diff = cv.subtract(frame, self.__prev_frame[0])
         # Only keep the positive differences
         diff = np.clip(diff, 0, 255)
-        cv2.imshow("diff", diff)
+        cv.imshow("diff", diff)
         object_positions = get_movement_spots(diff, self.__settings)
         mean_time = (capture_time + self.__prev_frame[1]) / 2
         self.__prev_frame = (frame, capture_time)
@@ -105,7 +105,7 @@ class MovementDetector:
         ret, frame = self.__cap.read()
         if not ret:
             raise Exception("Could not read frame from camera")
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         # Crop a third of the image from the top and bottom
         height, _ = frame.shape
         frame = frame[int(height / 3) : int((height * 2) / 3), :]
