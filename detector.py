@@ -59,8 +59,12 @@ def main():
 
 
 if __name__ == "__main__":
-    from threading import Thread
-
-    t = Thread(target=main)
-    t.start()
-    time.sleep(1000000)
+    main()
+    # Main can also be run in a separate thread, like this:
+    # ```
+    # from threading import Thread
+    # t = Thread(target=main)
+    # t.start()
+    # ```
+    # Using mulpiprocessing instead results in OpenCV not being able to take
+    # control of the camera, which renders the program useless.
