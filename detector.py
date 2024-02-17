@@ -21,7 +21,8 @@ def show_preview(frame, object_positions: list):
 
 
 def main():
-    detector = MovementDetector(Settings(15, 20, 15), CAMERA_ID)
+    settings = Settings(15, 10, 15)
+    detector = MovementDetector(settings, CAMERA_ID)
     position_history = []
     while True:
         try:
