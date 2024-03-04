@@ -39,7 +39,7 @@ def get_movement_spots(diff, settings: Settings) -> List[Tuple[int, int]]:
     _, thresh = cv.threshold(blur, settings.threshold, 255, cv.THRESH_BINARY)
     # Dilation is used to fill in the gaps between contours
     dilated = cv.dilate(thresh, None, iterations=settings.dilation_iterations)
-    contours, _ = cv.findContours(dilated, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    contours, _ = cv.findContours(dilated, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
     # Get the centers of the contours
     centers = get_contour_centers(contours)
     return centers
