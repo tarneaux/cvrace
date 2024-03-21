@@ -115,7 +115,7 @@ def plot_data(
 
 if __name__ == '__main__':
     data_points = read_data('positions.csv')
-    data_points = find_longest_monotonic_sequence(data_points)
+    data_points = find_longest_monotonic_sequence(data_points, lambda x: x[1])
     data_points = map_points_to_real_position(data_points, point_filter)
     data_points_smoothed = list(filtfilt([1/3, 1/3, 1/3], [1], data_points, axis=0))
     speeds = get_speeds(data_points_smoothed)
